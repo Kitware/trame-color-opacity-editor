@@ -60,7 +60,7 @@ const colorOpacityNodes = computed(() => {
       j++;
     }
 
-    let mapped: Vector4D = [...colormapFn(value), opacitymapFn(value)];
+    const mapped: Vector4D = [...colormapFn(value), opacitymapFn(value)];
     colorOpacityNodes.push([value, mapped]);
   }
 

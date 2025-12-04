@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { defineProps, defineSlots, computed } from "vue";
+import { defineSlots, computed } from "vue";
 import { linearScale, createColorMap } from "@colormap/core";
 
 import type { ColorNode, OpacityNode } from "@/types";
 import { MapNodeAdapter } from "@/utils/nodes";
-
-defineProps<{}>();
 
 const nodes = defineModel<ColorNode[]>("nodes", {
   required: true,

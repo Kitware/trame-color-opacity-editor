@@ -192,7 +192,7 @@ function onLeftMouseDown(
     if (picked.type === "handle") {
       activeNodeId.value = picked.id;
     } else {
-      let f0 = pixelToFraction(p, props.size, props.padding, contentSize.value);
+      const f0 = pixelToFraction(p, props.size, props.padding, contentSize.value);
 
       activeNodeId.value = picked.id + 1;
 
@@ -257,7 +257,7 @@ function onDoubleClick(ev: MouseEvent) {
     return;
   }
 
-  let f0 = pixelToFraction(p0, props.size, props.padding, contentSize.value);
+  const f0 = pixelToFraction(p0, props.size, props.padding, contentSize.value);
 
   let newNodeId = -1;
 

@@ -1,20 +1,16 @@
 <script setup lang="ts">
 import {
-  defineProps,
   onMounted,
   onBeforeUnmount,
   useTemplateRef,
   ref,
-  type Ref,
 } from "vue";
 
 import type { Vector2D } from "@/types";
 
-defineProps<{}>();
-
 const divEl = useTemplateRef<HTMLDivElement>("div-root");
 
-const viewportSize: Ref<Vector2D> = ref([1, 1]);
+const viewportSize = ref<Vector2D>([1, 1]);
 
 let resizeObserver: ResizeObserver | null = null;
 

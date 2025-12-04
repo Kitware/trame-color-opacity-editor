@@ -1,13 +1,9 @@
-<script setup lang="ts" generic="T extends OpacityNode | ColorNode">
+<script setup lang="ts" generic="T">
 import { defineProps, computed, withDefaults } from "vue";
 
-import type { ColorNode, OpacityNode, Vector2D } from "@/types";
+import type { MapNode, Vector2D } from "@/types";
 
 import { unscaleNode, scaleNodes, unscaleNodes } from "@/utils/nodes";
-
-type SlotPropsNames = {
-  scaledNodes: string;
-};
 
 const props = withDefaults(
   defineProps<{
@@ -15,55 +11,53 @@ const props = withDefaults(
     yRange?: Vector2D;
     xLog?: boolean;
     yLog?: boolean;
-    slotPropsNames?: SlotPropsNames;
   }>(),
   {
-    slotPropsNames: () => ({ scaledNodes: "scaledNodes" }),
     xLog: false,
     yLog: false,
   },
 );
 
-const nodes = defineModel<T[]>("nodes", {
+const nodes = defineModel<MapNode<T>[]>("nodes", {
   required: true,
 });
 
 const emit = defineEmits<{
-  nodeModified: [[index: number, node: T]];
-  nodeAdded: [[index: number, node: T]];
+  nodeModified: [[index: number, node: MapNode<T>]];
+  nodeAdded: [[index: number, node: MapNode<T>]];
   nodeRemoved: [index: number];
 }>();
 
 defineSlots<{
   default(props: {
-    scaledNodes: T[];
-    scaledNodesUpdated(nodes: T[]): void;
-    scaledNodeModified([index, node]: [number, T]): void;
-    scaledNodeAdded([index, node]: [number, T]): void;
+    scaledNodes: MapNode<T>[];
+    scaledNodesUpdated(nodes: MapNode<T>[]): void;
+    scaledNodeModified([index, node]: [number, MapNode<T>]): void;
+    scaledNodeAdded([index, node]: [number, MapNode<T>]): void;
     scaledNodeRemoved(index: number): void;
   }): void;
 }>();
 
 const scaledNodes = computed(() => {
-  return scaleNodes(nodes.value as any, props.xRange, props.yRange) as T[];
+  return scaleNodes(nodes.value, props.xRange, props.yRange);
 });
 
-function onScaledNodesUpdated(newScaledNodes: T[]) {
+function onScaledNodesUpdated(newScaledNodes: MapNode<T>[]) {
   nodes.value = unscaleNodes(
-    newScaledNodes as any,
+    newScaledNodes,
     props.xRange,
     props.yRange,
-  ) as T[];
+  );
 }
 
-function onScaledNodesNodeModified([index, node]: [number, T]) {
-  node = unscaleNode(node as any, props.xRange, props.yRange) as T;
+function onScaledNodesNodeModified([index, node]: [number, MapNode<T>]) {
+  node = unscaleNode(node, props.xRange, props.yRange);
 
   emit("nodeModified", [index, node]);
 }
 
-function onScaledNodesNodeAdded([index, node]: [number, T]) {
-  node = unscaleNode(node as any, props.xRange, props.yRange) as T;
+function onScaledNodesNodeAdded([index, node]: [number, MapNode<T>]) {
+  node = unscaleNode(node, props.xRange, props.yRange);
 
   emit("nodeAdded", [index, node]);
 }
