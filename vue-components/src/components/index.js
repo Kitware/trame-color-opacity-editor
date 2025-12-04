@@ -1,6 +1,6 @@
+import ColorOpacityEditor from "./ColorOpacityEditor.vue";
 import NodeScaler from "./internal/NodeScaler.vue";
 import ViewportContainer from "./internal/ViewportContainer.vue";
-import ColorOpacityEditor from "./ColorOpacityEditor.vue";
 import BackgroundShaper from "./internal/BackgroundShaper.vue";
 import BackgroundShaperFull from "./internal/BackgroundShaperFull.vue";
 import BackgroundShaperOpacity from "./internal/BackgroundShaperOpacity.vue";

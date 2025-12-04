@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { OpacityNode } from '@/types';
+import type { OpacityNode, Vector2D } from '@/types';
 import { defineProps, computed } from 'vue'
 
 const props = defineProps<{
     nodes: OpacityNode[];
+}>();
+
+defineSlots<{
+    default(props: {
+        shape: Vector2D[];
+    }): void;
 }>();
 
 const shape = computed(() => {
@@ -12,8 +18,8 @@ const shape = computed(() => {
     let endY = 0;
 
     if (!empty) {
-        startY = props.nodes[0][1];
-        endY = props.nodes[props.nodes.length - 1][1];
+        startY = props.nodes[0]![1];
+        endY = props.nodes[props.nodes.length - 1]![1];
     }
 
     return [
@@ -22,7 +28,7 @@ const shape = computed(() => {
         ...props.nodes,
         [1, endY],
         [1, 0],
-    ];
+    ] as Vector2D[];
 });
 
 </script>

@@ -1,5 +1,5 @@
-import { Vector2D, Vector4D, ColorNode, ColorOpacityNode, OpacityNode } from "@/types";
-import { RGBAColor } from "@colormap/core";
+import type { Vector2D, Vector4D, ColorNode, ColorOpacityNode, OpacityNode } from "@/types";
+import type { RGBAColor } from "@colormap/core";
 
 export function fractionToPixel(f: Vector2D, size: Vector2D, padding: Vector2D, contentSize: Vector2D): Vector2D {
     return [
@@ -28,7 +28,7 @@ export function pickNodeOnCanvas(p: Vector2D, context: CanvasRenderingContext2D)
     // the picking canvas is transparent anywhere but where the nodes are
     if (color[3] === 255) {
       return {
-        id: color[1],
+        id: color[1]!,
         type: color[0] == 0 ? "handle" : "edge",
       }
     }
@@ -38,11 +38,11 @@ export function pickNodeOnCanvas(p: Vector2D, context: CanvasRenderingContext2D)
 
 export function getNodeBounds(nodeId: number, nodes: OpacityNode[], epsilon: number): Vector4D {
     if (nodeId == 0) {
-        return [0, nodes[1][0] - epsilon, 0, 1];
-    } else if (nodeId == nodes.length - 1) {
-        return [nodes[nodeId - 1][0] + epsilon, 1, 0, 1];
+        return [0, nodes[1]![0] - epsilon, 0, 1];
+    } else if (nodeId >= nodes.length - 1) {
+        return [nodes[nodeId - 1]![0] + epsilon, 1, 0, 1];
     } else {
-        return [nodes[nodeId - 1][0] + epsilon, nodes[nodeId + 1][0] - epsilon, 0, 1];
+        return [nodes[nodeId - 1]![0] + epsilon, nodes[nodeId + 1]![0] - epsilon, 0, 1];
     }
 }
 
@@ -93,11 +93,11 @@ export function drawCanvasBackground(context: CanvasRenderingContext2D, size: Ve
 
     context.beginPath();
 
-    p0 = fractionToPixel(shape[0], size, padding, contentSize);
+    p0 = fractionToPixel(shape[0]!, size, padding, contentSize);
     context.moveTo(p0[0], p0[1]);
 
     for (let i = 1; i < shape.length; i++) {
-        p0 = fractionToPixel(shape[i], size, padding, contentSize);
+        p0 = fractionToPixel(shape[i]!, size, padding, contentSize);
         context.lineTo(p0[0], p0[1]);
     }
 
@@ -119,12 +119,12 @@ export function drawCanvasControls(
         pickerContext.lineWidth = radius * 3;
         pickerContext.beginPath();
 
-        let [x, y] = fractionToPixel(nodes[0], size, padding, contentSize);
+        let [x, y] = fractionToPixel(nodes[0]!, size, padding, contentSize);
         context.moveTo(x, y);
         pickerContext.moveTo(x, y);
 
         for (let i = 1; i < nodes.length; ++i) {
-            let [x, y] = fractionToPixel(nodes[i], size, padding, contentSize);
+            let [x, y] = fractionToPixel(nodes[i]!, size, padding, contentSize);
 
             pickerContext.strokeStyle = `rgb(${1}, ${i - 1}, ${0})`;
 
@@ -148,7 +148,7 @@ export function drawCanvasControls(
     context.strokeStyle = `rgba(${borderColor[0]}, ${borderColor[1]}, ${borderColor[2]}, ${borderColor[3]})`;
     context.lineWidth = 2;
     for (let i = 0; i < nodes.length; ++i) {
-      let [x, y] = fractionToPixel(nodes[i], size, padding, contentSize);
+      let [x, y] = fractionToPixel(nodes[i]!, size, padding, contentSize);
       context.beginPath();
       context.arc(x, y, radius, 0, 2 * Math.PI);
       context.fill();

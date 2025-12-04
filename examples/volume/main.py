@@ -122,6 +122,7 @@ class VolumeApp(TrameApp):
         hist = np.log10(hist)
         self.state.hist_y_range = [0, float(np.max(hist))]
         self.state.histograms = [[float(bin), float(count)] for count, bin in zip(hist, bins)]
+        self.state.opacities = self.make_linear_nodes([0, 1], self.state.x_range)
 
         self.volume_view = VolumeView()
         self.volume_view.volume_property.SetShade(1)  # enable shadows
@@ -166,6 +167,24 @@ class VolumeApp(TrameApp):
 
         self.ctx.view.update()
 
+    def on_opacity_node_modified(self, _index, _node):
+        pass
+
+    def on_opacity_node_added(self, _index, _node):
+        pass
+
+    def on_opacity_node_removed(self, _index):
+        pass
+
+    def on_color_node_modified(self, _index, _node):
+        pass
+
+    def on_color_node_added(self, _index, _node):
+        pass
+
+    def on_color_node_removed(self, _index):
+        pass
+
     def _build_ui(self):
         with VAppLayout(self.server) as self.ui:
             with html.Div(classes="d-flex flex-column h-100"):
@@ -204,10 +223,13 @@ class VolumeApp(TrameApp):
                 color_opacity.ColorOpacityEditor(
                     classes="pa-2 h-25",
                     v_model_colorNodes="colors",
-                    v_model_opacityNodes=(
-                        "opacities",
-                        self.make_linear_nodes([0, 1], self.state.x_range),
-                    ),
+                    v_model_opacityNodes=("opacities",),
+                    opacity_node_modified=(self.on_opacity_node_modified, "$event"),
+                    opacity_node_added=(self.on_opacity_node_added, "$event"),
+                    opacity_node_removed=(self.on_opacity_node_removed, "[$event]"),
+                    color_node_modified=(self.on_color_node_modified, "$event"),
+                    color_node_added=(self.on_color_node_added, "$event"),
+                    color_node_removed=(self.on_color_node_removed, "[$event]"),
                     histograms=("histograms",),
                     scalar_range=("x_range",),
                     histograms_range=("hist_y_range",),

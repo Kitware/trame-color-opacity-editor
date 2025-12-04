@@ -5,7 +5,6 @@ import type { Vector2D } from '@/types'
 import { clampNodeToBounds, drawCanvasControls, getNodeBounds, mouseToPixel, pickNodeOnCanvas, pixelToFraction } from '@/utils/canvas';
 
 interface Props {
-    nodes: OpacityNode[];
     color: RGBAColor;
     borderColor: RGBAColor;
     size: Vector2D;
@@ -24,8 +23,14 @@ const props = withDefaults(defineProps<Props>(), {
     lineWidth: 3,
 });
 
+const nodes = defineModel<OpacityNode[]>("nodes", {
+  required: true,
+});
+
 const emit = defineEmits<{
-    'update:nodes': [OpacityNode[]];
+    nodeModified: [[index: number, node: OpacityNode]];
+    nodeAdded: [[index: number, node: OpacityNode]];
+    nodeRemoved: [index: number];
 }>();
 
 const canvas = useTemplateRef<HTMLCanvasElement>("controls-canvas");
@@ -41,7 +46,7 @@ const contentSize = computed<Vector2D>(() => [
 const fillColor = computed<RGBAColor>(() => [props.color[0] * 255, props.color[1] * 255, props.color[2] * 255, props.color[3]]);
 const outerColor = computed<RGBAColor>(() => [props.borderColor[0] * 255, props.borderColor[1] * 255, props.borderColor[2] * 255, props.borderColor[3]]);
 
-watch(() => [canvas, pickingCanvas, props.size, props.padding, props.nodes, props.radius, props.showLine, props.lineWidth, fillColor, outerColor], () => {
+watch(() => [canvas, pickingCanvas, props.size, props.padding, nodes.value, props.radius, props.showLine, props.lineWidth, fillColor, outerColor], () => {
     if (!canvas.value || !pickingCanvas.value) {
         return;
     }
@@ -58,7 +63,7 @@ watch(() => [canvas, pickingCanvas, props.size, props.padding, props.nodes, prop
     pickingCanvas.value.width = props.size[0];
     pickingCanvas.value.height = props.size[1];
 
-    drawCanvasControls(context, pickingContext, props.size, props.padding, contentSize.value, props.nodes, props.radius, props.showLine, props.lineWidth, fillColor.value, outerColor.value);
+    drawCanvasControls(context, pickingContext, props.size, props.padding, contentSize.value, nodes.value, props.radius, props.showLine, props.lineWidth, fillColor.value, outerColor.value);
 });
 
 onMounted(() => {
@@ -78,7 +83,7 @@ onMounted(() => {
     pickingCanvas.value.width = props.size[0];
     pickingCanvas.value.height = props.size[1];
 
-    drawCanvasControls(context, pickingContext, props.size, props.padding, contentSize.value, props.nodes, props.radius, props.showLine, props.lineWidth, fillColor.value, outerColor.value);
+    drawCanvasControls(context, pickingContext, props.size, props.padding, contentSize.value, nodes.value, props.radius, props.showLine, props.lineWidth, fillColor.value, outerColor.value);
 });
 
 function onMouseMove(ev: MouseEvent) {
@@ -93,19 +98,20 @@ function onMouseMove(ev: MouseEvent) {
     const p0 = mouseToPixel([ev.clientX, ev.clientY], canvas.value.getBoundingClientRect());
     let f0 = pixelToFraction(p0, props.size, props.padding, contentSize.value);
 
-    const bounds = getNodeBounds(activeNodeId.value, props.nodes, 0.001);
+    const bounds = getNodeBounds(activeNodeId.value, nodes.value, 0.001);
     f0 = clampNodeToBounds(f0, bounds);
 
-    const currentF0 = props.nodes[activeNodeId.value];
+    const currentF0 = nodes.value[activeNodeId.value];
 
-    if (f0[0] == currentF0[0] && f0[1] == currentF0[1]) {
+    if (currentF0 === undefined || (f0[0] == currentF0[0] && f0[1] == currentF0[1])) {
         return;
     }
 
-    const newNodes = [...props.nodes];
+    const newNodes = [...nodes.value];
     newNodes[activeNodeId.value] = f0;
 
-    emit('update:nodes', newNodes);
+    emit('nodeModified', [activeNodeId.value, f0]);
+    nodes.value = newNodes;
 }
 
 function onLeftMouseDown(p: Vector2D, picked: { id: number; type: "handle" | "edge"; } | null) {
@@ -116,8 +122,9 @@ function onLeftMouseDown(p: Vector2D, picked: { id: number; type: "handle" | "ed
             let f0 = pixelToFraction(p, props.size, props.padding, contentSize.value);
 
             activeNodeId.value = picked.id + 1;
-            emit('update:nodes', [...props.nodes.slice(0, picked.id + 1), f0, ...props.nodes.slice(picked.id + 1, props.nodes.length)]);
-            // nodes.value = [...nodes.value.slice(0, picked.id + 1), f0, ...nodes.value.slice(picked.id + 1, nodes.value.length)];
+
+            emit('nodeAdded', [picked.id + 1, f0]);
+            nodes.value = [...nodes.value.slice(0, picked.id + 1), f0, ...nodes.value.slice(picked.id + 1, nodes.value.length)];
         }
 
         window.addEventListener("mousemove", onMouseMove);
@@ -131,9 +138,13 @@ function onLeftMouseDown(p: Vector2D, picked: { id: number; type: "handle" | "ed
 }
 
 function onRightMouseDown(p: Vector2D, picked: { id: number; type: "handle" | "edge"; } | null) {
+    if (nodes.value.length < 3) {
+        return;
+    }
+
     if (picked && picked.type === 'handle') {
-        emit('update:nodes', [...props.nodes.slice(0, picked.id), ...props.nodes.slice(picked.id + 1, props.nodes.length)]);
-        // nodes.value = [...nodes.value.slice(0, picked.id), ...nodes.value.slice(picked.id + 1, nodes.value.length)];
+        emit('nodeRemoved', picked.id);
+        nodes.value = [...nodes.value.slice(0, picked.id), ...nodes.value.slice(picked.id + 1, nodes.value.length)];
     }
 }
 
@@ -146,8 +157,14 @@ function onDoubleClick(ev: MouseEvent) {
         return;
     }
 
+    const ctx = pickingCanvas.value.getContext('2d');
+
+    if (!ctx) {
+        return;
+    }
+
     const p0 = mouseToPixel([ev.clientX, ev.clientY], canvas.value.getBoundingClientRect());
-    const picked = pickNodeOnCanvas(p0, pickingCanvas.value.getContext('2d'));
+    const picked = pickNodeOnCanvas(p0, ctx);
 
     // only create a node if we double clicked on empty space
     if (picked) {
@@ -158,16 +175,16 @@ function onDoubleClick(ev: MouseEvent) {
 
     let newNodeId = -1;
 
-    for (let i = 0; i < props.nodes.length; i++) {
-        if (props.nodes[i][0] > f0[0]) {
+    for (let i = 0; i < nodes.value.length; i++) {
+        if (nodes.value[i]![0] > f0[0]) {
             break;
         }
 
         newNodeId = i;
     }
 
-    emit('update:nodes', [...props.nodes.slice(0, newNodeId + 1), f0, ...props.nodes.slice(newNodeId + 1, props.nodes.length)]);
-    // nodes.value = [...nodes.value.slice(0, newNodeId + 1), f0, ...nodes.value.slice(newNodeId + 1, nodes.value.length)];
+    emit('nodeAdded', [newNodeId + 1, f0]);
+    nodes.value = [...nodes.value.slice(0, newNodeId + 1), f0, ...nodes.value.slice(newNodeId + 1, nodes.value.length)];
 }
 
 function onMouseDown(ev: MouseEvent) {
@@ -179,8 +196,14 @@ function onMouseDown(ev: MouseEvent) {
         return;
     }
 
+    const ctx = pickingCanvas.value.getContext('2d');
+
+    if (!ctx) {
+        return;
+    }
+
     const p0 = mouseToPixel([ev.clientX, ev.clientY], canvas.value.getBoundingClientRect());
-    const picked = pickNodeOnCanvas(p0, pickingCanvas.value.getContext('2d'));
+    const picked = pickNodeOnCanvas(p0, ctx);
 
     if (ev.button == 0) {
         onLeftMouseDown(p0, picked);

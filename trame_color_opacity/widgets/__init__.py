@@ -57,7 +57,15 @@ class ColorOpacityEditor(HtmlElement):
             ("line_width", "lineWidth"),
         ]
 
-        self._event_names += []
+        self._event_names += [
+            ("opacity_node_modified", "opacityNodeModified"),
+            ("opacity_node_added", "opacityNodeAdded"),
+            ("opacity_node_removed", "opacityNodeRemoved"),
+
+            ("color_node_modified", "colorNodeModified"),
+            ("color_node_added", "colorNodeAdded"),
+            ("color_node_removed", "colorNodeRemoved"),
+        ]
 
         add_named_models(self, named_models)
 

@@ -1,92 +1,88 @@
-<script setup lang="ts">
-import { defineProps, computed } from 'vue'
+<script setup lang="ts" generic="T extends OpacityNode | ColorNode">
+import { defineProps, computed, withDefaults } from 'vue'
 
-import { isColorNodes, type ColorNode, type ColorOpacityNode, type OpacityNode, type Vector2D, type Vector4D } from '@/types'
+import type { ColorNode, ColorOpacityNode, OpacityNode, Vector2D } from '@/types'
+
+import {
+    isColorNodes,
+    unscaleNode,
+    scaleNodeX, scaleNodeY,
+    scaleNodesX, scaleNodesY,
+    unscaleNodeX, unscaleNodeY,
+    unscaleNodesX, unscaleNodesY,
+    scaleNodes, unscaleNodes,
+} from '@/utils/nodes';
 
 
 type SlotPropsNames = {
   scaledNodes: string;
 };
 
-const props = defineProps<{
-    xRange: Vector2D | undefined;
-    yRange: Vector2D | undefined;
-    xLog: boolean;
-    yLog: boolean;
-    slotPropsNames: SlotPropsNames;
-}>();
+const props = withDefaults(defineProps<{
+    xRange?: Vector2D;
+    yRange?: Vector2D;
+    xLog?: boolean;
+    yLog?: boolean;
+    slotPropsNames?: SlotPropsNames;
+}>(), {
+    slotPropsNames: () => ({scaledNodes: "scaledNodes"}),
+    xLog: false,
+    yLog: false,
+});
 
-const nodes = defineModel<OpacityNode[] | ColorNode[]>("nodes", {
+const nodes = defineModel<T[]>("nodes", {
   required: true,
 });
 
+const emit = defineEmits<{
+    nodeModified: [[index: number, node: T]];
+    nodeAdded: [[index: number, node: T]];
+    nodeRemoved: [index: number];
+}>();
+
+defineSlots<{
+    default(props: {
+        scaledNodes: T[];
+        scaledNodesUpdated(nodes: T[]): void;
+        scaledNodeModified([index, node]: [number, T]): void;
+        scaledNodeAdded([index, node]: [number, T]): void;
+        scaledNodeRemoved(index: number): void;
+    }): void;
+}>();
+
 const scaledNodes = computed(() => {
-    const scaleX = props.xRange != undefined;
-    const scaleY = props.yRange != undefined;
-
-    let scaledNodes = [...nodes.value] as OpacityNode[] | ColorNode[];
-
-    if (nodes.value.length == 0 || (!scaleX && !scaleY)) {
-        return scaledNodes;
-    }
-
-    if (isColorNodes(scaledNodes)) {
-        if (scaleX) {
-            let xSpan = Math.abs(props.xRange[1] - props.xRange[0]);
-            scaledNodes = scaledNodes.map((el) => [(el[0] - props.xRange[0]) / xSpan, el[1]]);
-        }
-    } else {
-        if (scaleX) {
-            let xSpan = Math.abs(props.xRange[1] - props.xRange[0]);
-            scaledNodes = scaledNodes.map((el) => [(el[0] - props.xRange[0]) / xSpan, el[1]]);
-        }
-
-        if (scaleY) {
-            let ySpan = Math.abs(props.yRange[1] - props.yRange[0]);
-            scaledNodes = scaledNodes.map((el) => [el[0], (el[1] - props.yRange[0]) / ySpan]);
-        }
-    }
-
-    return scaledNodes;
+    return scaleNodes(nodes.value as any, props.xRange, props.yRange) as T[];
 });
 
-function onScaledNodesUpdate(newScaledNodes: OpacityNode[] | ColorNode[]) {
-    const scaleX = props.xRange != undefined;
-    const scaleY = props.yRange != undefined;
+function onScaledNodesUpdated(newScaledNodes: T[]) {
+    nodes.value = unscaleNodes(newScaledNodes as any, props.xRange, props.yRange) as T[];
+}
 
-    let newNodes = [...newScaledNodes] as OpacityNode[] | ColorNode[];
+function onScaledNodesNodeModified([index, node]: [number, T]) {
+    node = unscaleNode(node as any, props.xRange, props.yRange) as T;
 
-    if (newNodes.length == 0 || (!scaleX && !scaleY)) {
-        nodes.value = newNodes;
-        return;
-    }
+    emit("nodeModified", [index, node]);
+}
 
-    if (isColorNodes(newNodes)) {
-        if (scaleX) {
-            let xSpan = Math.abs(props.xRange[1] - props.xRange[0]);
-            newNodes = newNodes.map((el) => [props.xRange[0] + el[0] * xSpan, el[1]]);
-        }
-    } else {
-        if (scaleX) {
-            let xSpan = Math.abs(props.xRange[1] - props.xRange[0]);
-            newNodes = newNodes.map((el) => [props.xRange[0] + el[0] * xSpan, el[1]]);
-        }
+function onScaledNodesNodeAdded([index, node]: [number, T]) {
+    node = unscaleNode(node as any, props.xRange, props.yRange) as T;
 
-        if (scaleY) {
-            let ySpan = Math.abs(props.yRange[1] - props.yRange[0]);
-            newNodes = newNodes.map((el) => [el[0], props.yRange[0] + el[1] * ySpan]);
-        }
-    }
+    emit("nodeAdded", [index, node]);
+}
 
-    nodes.value = newNodes;
+function onScaledNodesNodeRemoved(index: number) {
+    emit("nodeRemoved", index);
 }
 
 </script>
 
 <template>
     <slot
-        :[slotPropsNames.scaledNodes]="scaledNodes"
-        :[`${slotPropsNames.scaledNodes}Updated`]="onScaledNodesUpdate"
+        :scaledNodes
+        :scaledNodesUpdated="onScaledNodesUpdated"
+        :scaledNodeModified="onScaledNodesNodeModified"
+        :scaledNodeAdded="onScaledNodesNodeAdded"
+        :scaledNodeRemoved="onScaledNodesNodeRemoved"
     ></slot>
 </template>
 

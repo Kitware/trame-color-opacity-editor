@@ -4,7 +4,7 @@ import {
   withDefaults,
 } from "vue";
 
-import type { ColorNode, OpacityNode, RGBAColor, Vector2D } from '@/types'
+import { type ColorNode, type OpacityNode, type RGBAColor, type Vector2D } from '@/types'
 import NodeScaler from "@/components/internal/NodeScaler.vue";
 import ViewportContainer from "@/components/internal/ViewportContainer.vue";
 import BackgroundShaper from "./internal/BackgroundShaper.vue";
@@ -14,6 +14,7 @@ import NodeMerger from "./internal/NodeMerger.vue";
 import BackgroundShaperFull from "./internal/BackgroundShaperFull.vue";
 import NodeFlattener from "./internal/NodeFlattener.vue";
 import BackgroundShaperHistograms from "./internal/BackgroundShaperHistograms.vue";
+import { isColorNode, isOpacityNode } from "@/utils/nodes";
 
 interface Props {
   scalarRange: Vector2D;
@@ -31,7 +32,14 @@ interface Props {
   lineWidth: number;
 }
 
-type Events = {};
+type Events = {
+  colorNodeModified: [[index: number, node: ColorNode]];
+  colorNodeAdded: [[index: number, node: ColorNode]];
+  colorNodeRemoved: [index: number];
+  opacityNodeModified: [[index: number, node: OpacityNode]];
+  opacityNodeAdded: [[index: number, node: OpacityNode]];
+  opacityNodeRemoved: [index: number];
+};
 
 const props = withDefaults(defineProps<Props>(), {
   backgroundShape: "opacity",
@@ -44,7 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
   lineWidth: 2,
 });
 
-defineEmits<Events>();
+const emit = defineEmits<Events>();
 
 const colorNodes = defineModel<ColorNode[]>("colorNodes", {
   required: true,
@@ -54,13 +62,77 @@ const opacityNodes = defineModel<OpacityNode[]>("opacityNodes", {
   required: true,
 });
 
+function onOpacityNodeModified([index, node]: [number, ColorNode | OpacityNode]) {
+  if (isOpacityNode(node)) {
+    emit('opacityNodeModified', [index, node]);
+  }
+}
+
+function onOpacityNodeAdded([index, node]: [number, ColorNode | OpacityNode]) {
+  if (isOpacityNode(node)) {
+    emit('opacityNodeAdded', [index, node]);
+  }
+}
+
+function onOpacityNodeRemoved(index: number) {
+  console.log("onOpacityNodeRemoved", index);
+  emit('opacityNodeRemoved', index);
+}
+
+function onColorNodeModified([index, node]: [number, ColorNode | OpacityNode]) {
+  if (isColorNode(node)) {
+    emit('colorNodeModified', [index, node]);
+  }
+}
+
+function onColorNodeAdded([index, node]: [number, ColorNode | OpacityNode]) {
+  if (isColorNode(node)) {
+    emit('colorNodeAdded', [index, node]);
+  }
+}
+
+function onColorNodeRemoved(index: number) {
+  emit('colorNodeRemoved', index);
+}
+
 </script>
 
 <template>
   <div class="color-opacity-editor-root-container" :style="style">
-    <NodeScaler v-model:nodes="histograms" :xRange="scalarRange" :yRange="histogramsRange" :slotPropsNames="{scaledNodes: 'scaledHistograms'}" v-slot="{ scaledHistograms, scaledHistogramsUpdated }">
-      <NodeScaler v-model:nodes="colorNodes" :xRange="scalarRange" :slotPropsNames="{scaledNodes: 'scaledColorNodes'}" v-slot="{ scaledColorNodes, scaledColorNodesUpdated }">
-        <NodeScaler v-model:nodes="opacityNodes" :xRange="scalarRange" :slotPropsNames="{scaledNodes: 'scaledOpacityNodes'}" v-slot="{ scaledOpacityNodes, scaledOpacityNodesUpdated }">
+    <NodeScaler
+      v-model:nodes="histograms"
+      :xRange="scalarRange"
+      :yRange="histogramsRange"
+      v-slot="{ scaledNodes: scaledHistograms }"
+    >
+      <NodeScaler
+        v-model:nodes="colorNodes"
+        :xRange="scalarRange"
+        @nodeModified="onColorNodeModified"
+        @nodeAdded="onColorNodeAdded"
+        @nodeRemoved="onColorNodeRemoved"
+        v-slot="{
+          scaledNodes: scaledColorNodes,
+          scaledNodesUpdated: scaledColorNodesUpdated,
+          scaledNodeModified: scaledColorNodeModified,
+          scaledNodeAdded: scaledColorNodeAdded,
+          scaledNodeRemoved: scaledColorNodeRemoved,
+        }"
+      >
+        <NodeScaler
+          v-model:nodes="opacityNodes"
+          :xRange="scalarRange"
+          @nodeModified="onOpacityNodeModified"
+          @nodeAdded="onOpacityNodeAdded"
+          @nodeRemoved="onOpacityNodeRemoved"
+          v-slot="{
+            scaledNodes: scaledOpacityNodes,
+            scaledNodesUpdated: scaledOpacityNodesUpdated,
+            scaledNodeModified: scaledOpacityNodeModified,
+            scaledNodeAdded: scaledOpacityNodeAdded,
+            scaledNodeRemoved: scaledOpacityNodeRemoved,
+          }"
+        >
           <ViewportContainer v-slot="{ viewportSize }" class="color-opacity-editor-opacity-container">
             <BackgroundShaper :backgroundShape :opacityNodes="scaledOpacityNodes" :histograms="scaledHistograms" v-slot="{ shape }">
               <NodeMerger v-if="backgroundOpacity" :colorNodes="scaledColorNodes" :opacityNodes="scaledOpacityNodes" v-slot="{ colorOpacityNodes }">
@@ -76,7 +148,11 @@ const opacityNodes = defineModel<OpacityNode[]>("opacityNodes", {
             <ControlsView
               :size="viewportSize" :padding="viewportPadding" showLine
               :radius="handleRadius" :lineWidth="lineWidth" :color="handleColor" :borderColor="handleBorderColor"
-              :nodes="scaledOpacityNodes" @update:nodes="scaledOpacityNodesUpdated"
+              :nodes="scaledOpacityNodes"
+              @update:nodes="scaledOpacityNodesUpdated"
+              @nodeModified="scaledOpacityNodeModified"
+              @nodeAdded="scaledOpacityNodeAdded"
+              @nodeRemoved="scaledOpacityNodeRemoved"
             ></ControlsView>
           </ViewportContainer>
 
@@ -84,11 +160,28 @@ const opacityNodes = defineModel<OpacityNode[]>("opacityNodes", {
             <BackgroundShaperFull v-slot="{ shape }">
               <BackgroundView :shape :size="viewportSize" :padding="viewportPadding" :nodes="scaledColorNodes"></BackgroundView>
             </BackgroundShaperFull>
-            <NodeFlattener :nodes="scaledColorNodes" @update:nodes="scaledColorNodesUpdated" :slotPropsNames="{flattenedNodes: 'flattenedColorNodes'}" v-slot="{ flattenedColorNodes, flattenedColorNodesUpdated }">
+            <NodeFlattener
+              :nodes="scaledColorNodes"
+              @update:nodes="scaledColorNodesUpdated"
+              @nodeModified="scaledColorNodeModified"
+              @nodeAdded="scaledColorNodeAdded"
+              @nodeRemoved="scaledColorNodeRemoved"
+              :slotPropsNames="{flattenedNodes: 'flattenedColorNodes'}"
+              v-slot="{
+                flattenedNodes: flattenedColorNodes,
+                flattenedNodesUpdated: flattenedColorNodesUpdated,
+                flattenedNodeModified: flattenedColorNodeModified,
+                flattenedNodeAdded: flattenedColorNodeAdded,
+                flattenedNodeRemoved: flattenedColorNodeRemoved,
+              }">
               <ControlsView
-                :size="viewportSize" :padding="[viewportPadding[0], 0]"
+                :size="viewportSize" :padding="[viewportPadding[0], 0]" :lineWidth="0"
                 :radius="handleRadius" :color="handleColor" :borderColor="handleBorderColor" :showLine="false"
-                :nodes="flattenedColorNodes" @update:nodes="flattenedColorNodesUpdated"
+                :nodes="flattenedColorNodes"
+                @update:nodes="flattenedColorNodesUpdated"
+                @nodeModified="flattenedColorNodeModified"
+                @nodeAdded="flattenedColorNodeAdded"
+                @nodeRemoved="flattenedColorNodeRemoved"
               ></ControlsView>
             </NodeFlattener>
           </ViewportContainer>

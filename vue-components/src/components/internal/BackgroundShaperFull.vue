@@ -1,23 +1,11 @@
 <script setup lang="ts">
-import { Vector2D } from '@/types';
-import { defineProps, computed, ref } from 'vue'
+import type { Vector2D } from '@/types';
 
-// const props = defineProps<{
-// }>();
-
-// const shape = computed(() => [
-//     [0, 0],
-//     [1, 0],
-//     [1, 1],
-//     [0, 1],
-// ]);
-
-// const shape = ref<Vector2D[]>([
-//     [0, 0],
-//     [1, 0],
-//     [1, 1],
-//     [0, 1],
-// ]);
+defineSlots<{
+    default(props: {
+        shape: Vector2D[];
+    }): void;
+}>();
 
 </script>
 

@@ -24,11 +24,3 @@ export type ColorOpacityNode = MapNode<RGBAColor>;
  * A point in 2D space
  */
 export type Point = Vector2D;
-
-export function isColorNodes(nodes: ColorNode[] | OpacityNode[]): nodes is ColorNode[] {
-    if (nodes.length === 0) {
-        return false;
-    }
-
-    return Array.isArray(nodes[0][1]);
-}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, onMounted, onBeforeUnmount, useTemplateRef, ref, Ref } from 'vue'
+import { defineProps, onMounted, onBeforeUnmount, useTemplateRef, ref, type Ref } from 'vue'
 
 import type { Vector2D } from '@/types'
 

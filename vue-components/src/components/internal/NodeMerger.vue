@@ -29,11 +29,11 @@ const colorOpacityNodes = computed(() => {
         let value: number = 0;
 
         if (i < adaptedColorNodes.value.length) {
-            colorValue = adaptedColorNodes.value[i].value;
+            colorValue = adaptedColorNodes.value[i]!.value;
         }
 
         if (j < adaptedOpacityNodes.value.length) {
-            opacityValue = adaptedOpacityNodes.value[j].value;
+            opacityValue = adaptedOpacityNodes.value[j]!.value;
         }
 
         if (colorValue == opacityValue) {

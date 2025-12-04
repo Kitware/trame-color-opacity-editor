@@ -3,7 +3,7 @@ import { defineProps } from 'vue'
 import BackgroundShaperFull from './BackgroundShaperFull.vue';
 import BackgroundShaperOpacity from './BackgroundShaperOpacity.vue';
 import BackgroundShaperHistograms from './BackgroundShaperHistograms.vue';
-import { OpacityNode, Vector2D } from '@/types';
+import type { OpacityNode, Vector2D } from '@/types';
 
 
 
@@ -13,19 +13,11 @@ const props = defineProps<{
     histograms?: Vector2D[];
 }>();
 
-// const shape = computed(() => [
-//     [0, 0],
-//     [1, 0],
-//     [1, 1],
-//     [0, 1],
-// ]);
-
-// const shape = ref<Vector2D[]>([
-//     [0, 0],
-//     [1, 0],
-//     [1, 1],
-//     [0, 1],
-// ]);
+defineSlots<{
+    default(props: {
+        shape: Vector2D[];
+    }): void;
+}>();
 
 </script>
 
