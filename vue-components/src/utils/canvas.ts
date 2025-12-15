@@ -93,12 +93,20 @@ export function drawCanvasBackground(
 
   nodes.forEach((node: ColorNode | ColorOpacityNode) => {
     const [value, color] = node
+
+    let v = value;
+    if (v < 0) {
+      v = 0;
+    } else if (v > 1) {
+      v = 1;
+    }
+
     if (color.length === 4) {
       const [r, g, b, a] = color
-      grad.addColorStop(value, `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`)
+      grad.addColorStop(v, `rgba(${r * 255}, ${g * 255}, ${b * 255}, ${a})`)
     } else {
       const [r, g, b] = color
-      grad.addColorStop(value, `rgba(${r * 255}, ${g * 255}, ${b * 255}, 1)`)
+      grad.addColorStop(v, `rgba(${r * 255}, ${g * 255}, ${b * 255}, 1)`)
     }
   })
 
