@@ -21,7 +21,7 @@ export default defineConfig({
         },
       },
     },
-    outDir: "../trame_color_opacity_editor/module/serve",
+    outDir: "../src/trame_color_opacity_editor/module/serve",
     assetsDir: ".",
   },
   plugins: [vue()],

@@ -6,7 +6,7 @@ authors = [
     {name = "Alessandro Genova"},
 ]
 dependencies = [
-    "trame_client>=3.5",
+    "trame_client>=3.10",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -32,29 +32,32 @@ dev = [
 ]
 
 [build-system]
-requires = ['setuptools', 'wheel']
-build-backend = 'setuptools.build_meta'
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["."]
-# Editable installs don't work with the namespace packages if we
-# include "trame" in this list. We must explicitly include "trame.modules"
-# and "trame.widgets" instead.
-include = ["trame.modules", "trame.widgets", "trame_color_opacity_editor"]
 
-[tool.setuptools.package-data]
-trame_color_opacity_editor = [
-    "**/*.py",
-    "**/*.js",
-    "**/*.css",
+[tool.hatch.build]
+include = [
+  "/src/trame/**/*.py",
+  "/src/trame_color_opacity_editor/**/*.py",
+  "/src/trame_color_opacity_editor/**/*.js",
+  "/src/trame_color_opacity_editor/**/*.css",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/trame",
+    "src/trame_color_opacity_editor",
+]
+
 [tool.semantic_release]
 version_variables = [
-    "trame_color_opacity_editor/__init__.py:__version__",
+    "src/trame_color_opacity_editor/__init__.py:__version__",
 ]
 version_toml = [
     "pyproject.toml:project.version",
 ]
+
 build_command = """
   python -m venv .venv
   source .venv/bin/activate
@@ -69,7 +72,7 @@ upload_to_vcs_release = true
 [tool.ruff]
 line-length = 100
 indent-width = 4
-target-version = "py39"
+target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "W", "F"]
