@@ -20,6 +20,8 @@ interface Props {
   backgroundOpacity: boolean
   histograms: Vector2D[]
   showHistograms: boolean
+  showOpacityEditor: boolean
+  showColorEditor: boolean
   style: string
   viewportPadding: Vector2D
   histogramsColor: RGBAColor
@@ -41,6 +43,8 @@ type Events = {
 withDefaults(defineProps<Props>(), {
   backgroundShape: 'opacity',
   showHistograms: false,
+  showOpacityEditor: true,
+  showColorEditor: true,
   histogramsColor: () => [0, 0, 0, 0.25],
   viewportPadding: () => [8, 8],
   handleColor: () => [0.125, 0.125, 0.125, 1],
@@ -130,6 +134,7 @@ function onColorNodeRemoved(index: number) {
           }"
         >
           <ViewportContainer
+            v-if="showOpacityEditor"
             v-slot="{ viewportSize }"
             class="color-opacity-editor-opacity-container"
           >
@@ -191,7 +196,11 @@ function onColorNodeRemoved(index: number) {
             ></ControlsView>
           </ViewportContainer>
 
-          <ViewportContainer v-slot="{ viewportSize }" class="color-opacity-editor-color-container">
+          <ViewportContainer
+            v-if="showColorEditor"
+            v-slot="{ viewportSize }"
+            class="color-opacity-editor-color-container"
+          >
             <BackgroundShaperFull v-slot="{ shape }">
               <BackgroundView
                 :shape

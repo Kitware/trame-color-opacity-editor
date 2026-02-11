@@ -94,11 +94,11 @@ export function drawCanvasBackground(
   nodes.forEach((node: ColorNode | ColorOpacityNode) => {
     const [value, color] = node
 
-    let v = value;
+    let v = value
     if (v < 0) {
-      v = 0;
+      v = 0
     } else if (v > 1) {
-      v = 1;
+      v = 1
     }
 
     if (color.length === 4) {
