@@ -52,6 +52,8 @@ class ColorOpacityEditor(HtmlElement):
             ("background_opacity", "backgroundOpacity"),
             "style",
             ("show_histograms", "showHistograms"),
+            ("show_opacity_editor", "showOpacityEditor"),
+            ("show_color_editor", "showColorEditor"),
             ("histograms_color", "histogramsColor"),
             ("viewport_padding", "viewportPadding"),
             ("handle_color", "handleColor"),
